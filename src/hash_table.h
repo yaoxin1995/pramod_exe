@@ -17,7 +17,7 @@
 struct node* get_element(struct node *list, int find_index);
 void remove_element(int key);
 void init_hash_table();
-int read (int key);
+int read_element_in_bucket (int key);
 int read_bucket (int key);
 
 

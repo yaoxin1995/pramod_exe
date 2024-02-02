@@ -3,6 +3,8 @@
         "type_traits": "c",
         "limits": "c",
         "stdlib.h": "c",
-        "assert.h": "c"
+        "assert.h": "c",
+        "mman.h": "c",
+        "stdio.h": "c"
     }
 }

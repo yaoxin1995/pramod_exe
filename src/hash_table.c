@@ -19,8 +19,6 @@ void insert(int key, int value)
 {
   	// float n = 0.0;     
 	/* n => Load Factor, keeps check on whether rehashing is required or not */
-
-    printf("insert start \n");
  
 	int index = hashcode(key);
     int ret = 0;
@@ -342,7 +340,7 @@ void delete_table () {
 			index++;
 			pthread_rwlock_unlock(&hash_table->lock_table[index]);
 	}
-	
+
 	// free table
 	free(hash_table->bucket_array);
 	free(hash_table->lock_table);
