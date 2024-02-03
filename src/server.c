@@ -8,13 +8,17 @@
 
 #include "ipc_api.h"
 
-void main() 
+void main(int argc, char *argv[]) 
 {
 	int choice, key, value, n, c, i;
 
+    assert(argc == 2);
+    int size = atoi(argv[1]);
+    printf("set hashtable size to %d\n", size);
+
     pthread_t threads[10];
     srand(time(NULL));
-    init_hash_table(100);
+    init_hash_table(size);
     destroy_mq();
     create_mq();
     open_queue();

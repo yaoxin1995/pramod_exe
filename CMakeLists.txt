@@ -4,8 +4,6 @@ add_compile_options("-Wno-unused-variable")
 
 include_directories(src)
 
-
-
 add_executable(server
     src/server.c
     src/queue.c
