@@ -1,6 +1,6 @@
 
 
-#build
+# Build
 
 ```
 git clone ...
@@ -10,7 +10,7 @@ cmake -DCMAKE_BUILD_TYPE=Release ..
 make
 ```
 
-#play
+# Play
 1. start server first:
 ```
 ./server
