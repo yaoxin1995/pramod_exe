@@ -18,13 +18,11 @@ struct node* get_element(struct node *list, int find_index);
 void remove_element(int key);
 void init_hash_table();
 int read_element_in_bucket (int key);
-int read_bucket (int key);
+void* read_bucket (int key, int *size);
+void insert(int key, int value);
 
 
 void delete_table();
-
-
-
 void test_can_add_multiple_items();
 void test_can_get_multiple_item();
 
@@ -57,10 +55,10 @@ struct hashtable
 {
  
 	struct arrayitem *bucket_array; 
-	/* head pointing the first element of Linked List at an index of Hash Table */
  
 	pthread_rwlock_t *lock_table;  
-	/* tail pointing the last element of Linked List at an index of Hash Table */
+
+	int *bucket_depth;
  
 };
 

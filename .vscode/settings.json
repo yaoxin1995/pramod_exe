@@ -5,6 +5,8 @@
         "stdlib.h": "c",
         "assert.h": "c",
         "mman.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "hash_table.h": "c",
+        "string.h": "c"
     }
 }

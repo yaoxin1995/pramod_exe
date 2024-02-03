@@ -59,8 +59,8 @@ int LFQueue_pop(LFQueue *queue, void *buf, uint64_t *size, uint64_t *seq)
         } while (id == LFRING_INVALID_ID);
 
         n = (LFNode *)(queue->nodes + header->node_total_size * id);
+
         memcpy(buf, n->data, n->size);
-        
         if (size)
                 *size = n->size;
         

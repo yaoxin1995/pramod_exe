@@ -6,17 +6,18 @@
 int size = 0;         /* Determines the no. of elements present in Hash Table */
 int max = 10;	      /* Determines the maximum capacity of Hash Table array */
 
- 
+int find (struct node *list, int key);
+
 /* This function creates an index corresponding to the every given key */
-int hashcode(int key)
-{
-	return (key % max);
+int hashcode (int key) {
+	int code = key % max;
+	printf("max %d, hash code of key %d is %d\n", max, key, code);
+	return code;
 }
  
 
  
-void insert(int key, int value)
-{
+void insert (int key, int value) {
   	// float n = 0.0;     
 	/* n => Load Factor, keeps check on whether rehashing is required or not */
  
@@ -43,6 +44,7 @@ void insert(int key, int value)
 		hash_table->bucket_array[index].head = item;
 		hash_table->bucket_array[index].tail = item;
 		// size++;
+		hash_table->bucket_depth[index] = hash_table->bucket_depth[index] + 1;
  
 	} else {
 		/* A Linked List is present at given index of Hash Table */
@@ -57,6 +59,7 @@ void insert(int key, int value)
 			hash_table->bucket_array[index].tail->next = item;
 			hash_table->bucket_array[index].tail = item;
 			// size++;
+			hash_table->bucket_depth[index] = hash_table->bucket_depth[index] + 1;
  
 		} else {
 			/*
@@ -84,7 +87,7 @@ void insert(int key, int value)
  
 }
  
-void rehash()
+void rehash ()
 {
 	struct arrayitem *temp = hash_table->bucket_array;     
 	/* temp pointing to the current Hash Table array */
@@ -129,8 +132,7 @@ void rehash()
  *Returns it's index
  *Returns -1 in case key is not present
 */
-int find(struct node *list, int key)
-{
+int find (struct node *list, int key) {
 	int retval = 0;
 	struct node *temp = list;
 	while (temp != NULL) 
@@ -147,8 +149,7 @@ int find(struct node *list, int key)
 }
  
 /* Returns the node (Linked List item) located at given find_index  */
-struct node* get_element(struct node *list, int find_index)
-{
+struct node* get_element (struct node *list, int find_index) {
 	int i = 0;
 	struct node *temp = list;
 	while (i != find_index) 
@@ -160,8 +161,7 @@ struct node* get_element(struct node *list, int find_index)
 }
  
 /* To remove an element from Hash Table */ 
-void remove_element(int key)
-{
+void remove_element(int key) {
 	int index = hashcode(key);
 
     pthread_rwlock_wrlock(&hash_table->lock_table[index]);
@@ -182,6 +182,7 @@ void remove_element(int key)
 			if (temp->key == key) {
   				hash_table->bucket_array[index].head = temp->next;
 				printf("This key has been removed\n");
+				hash_table->bucket_depth[index] = hash_table->bucket_depth[index] - 1;
                 pthread_rwlock_unlock(&hash_table->lock_table[index]);
 				return;
 			}
@@ -196,16 +197,18 @@ void remove_element(int key)
 			} else {
 				temp->next = temp->next->next;
 			}
+			hash_table->bucket_depth[index] = hash_table->bucket_depth[index] - 1;
 			printf("This key has been removed\n");
 		}
 	}
     
+	assert(hash_table->bucket_depth[index] >= 0);
     pthread_rwlock_unlock(&hash_table->lock_table[index]);
 }
 
-int read (int key) {
+int read_element_in_bucket (int key) {
     int index = hashcode(key);
-    int res = -1;
+    int res = -1111111;
 
     pthread_rwlock_rdlock(&hash_table->lock_table[index]);
 	struct node *list = (struct node*) hash_table->bucket_array[index].head;
@@ -231,39 +234,49 @@ Unlock:
 }
 
 
-int read_bucket (int key) {
+void* read_bucket (int key, int *size) {
     int index = hashcode(key);
-    int res = -1;
-
-
+	int (*bucket)[2];
+	printf("1\n");
     pthread_rwlock_rdlock(&hash_table->lock_table[index]);
 	struct node *list = (struct node*) hash_table->bucket_array[index].head;
  
 	if (list == NULL) {
 		printf("This key does not exists\n");
+		*size = -1;
         goto Unlock;
 	} else {
 		int find_index = find(list, key);
  
 		if (find_index == -1) {
 			printf("This key does not exists\n");
+			*size = -1;
             goto Unlock;
 		} else {
-			struct node *element = get_element(list, find_index);
-			res = element->value;
+			int bucket_depth = hash_table->bucket_depth[index];
+			bucket = malloc(sizeof(int[bucket_depth][2]));
+
+			struct node *temp = list;
+			for (int i = 0; i < bucket_depth; i++) {
+				printf("2 i %d  bucket_depth %d\n",i, bucket_depth);
+				bucket[i][0] = temp->key;
+				bucket[i][1] = temp->value;
+				printf("bucket element key %d value %d\n", bucket[i][0], bucket[i][1]);
+				temp = temp->next;
+			}
+			*size = bucket_depth;
 		}
 	}
 
 Unlock: 
     pthread_rwlock_unlock(&hash_table->lock_table[index]);
-    return res;
+    return bucket;
 }
 
 
  
 /* To display the contents of Hash Table */
-void display()
-{
+void display() {
 	int i = 0;
 	for (i = 0; i < max; i++) 
         {
@@ -299,6 +312,7 @@ void init_hash_table(ssize_t size) {
     hash_table = (struct hashtable*)malloc(sizeof(struct hashtable));
 	hash_table->bucket_array = (struct arrayitem*) malloc(max * sizeof(struct arrayitem));
     hash_table->lock_table = (pthread_rwlock_t*) malloc(max * sizeof(pthread_rwlock_t));
+	hash_table->bucket_depth = (int *)malloc(max* sizeof(int));
 
 	for (i = 0; i < max; i++)
         {
@@ -309,6 +323,8 @@ void init_hash_table(ssize_t size) {
             printf("pthread_rwlock_init failed {%d}", ret);
             exit(ret);
         }
+
+		hash_table->bucket_depth[i] = 0;
 	}
  
 }
@@ -344,18 +360,9 @@ void delete_table () {
 	// free table
 	free(hash_table->bucket_array);
 	free(hash_table->lock_table);
+	free(hash_table->bucket_depth);
 	free(hash_table);
 }
-
-
- 
-/* Returns size of Hash Table */ 
-int size_of_array()
-{
-	return size;
-}
-
-
 
 void test_can_add_multiple_items() {
 
@@ -376,7 +383,7 @@ void test_can_get_multiple_item() {
 
 
     for (int i = 0; i < 1000; i++) {
-        int val = read(test_arr[i]);
+        int val = read_element_in_bucket(test_arr[i]);
         assert(val == i);
     }
 }
