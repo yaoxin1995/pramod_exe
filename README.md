@@ -13,7 +13,7 @@ make
 # Play
 1. start server first:
 ```
-./server
+./server hashtable_size    
 ```
 2. start the client
 ```
